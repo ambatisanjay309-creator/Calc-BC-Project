@@ -1,0 +1,853 @@
+cat > /mnt/user-data/outputs/AP_CalcBC_ReviewGame.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Calc BC — The Gauntlet</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] },
+  startup: { ready() { MathJax.startup.defaultReady(); } }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --accent: #7c6ff7;
+    --accent2: #f7c948;
+    --accent3: #4fd1a0;
+    --danger: #f7604c;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --font: 'Space Grotesk', sans-serif;
+    --display: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--font);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(124,111,247,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(124,111,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  #app { position: relative; z-index: 1; width: 100%; max-width: 780px; padding: 2rem 1.5rem 4rem; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+  }
+  #topbar .logo { font-family: var(--display); font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); }
+  #topbar .stats { display: flex; gap: 1rem; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px 14px; font-size: 0.85rem; font-family: var(--mono);
+  }
+  .stat-pill .label { color: var(--muted); font-size: 0.72rem; margin-right: 2px; }
+  .stat-pill .val { color: var(--accent2); font-weight: 600; }
+
+  /* ── HOME ── */
+  .home-hero { text-align: center; padding: 2.5rem 0 1.5rem; }
+  .home-hero .eyebrow { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+  .home-hero h1 { font-family: var(--display); font-size: 3.2rem; line-height: 1.05; margin-bottom: 1rem; }
+  .home-hero h1 span { color: var(--accent); }
+  .home-hero p { color: var(--muted); max-width: 480px; margin: 0 auto 2rem; line-height: 1.7; font-size: 0.95rem; }
+
+  .how-to-play {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.25rem 1.5rem; margin-bottom: 2rem; text-align: left;
+  }
+  .how-to-play h3 { font-family: var(--display); font-size: 1rem; color: var(--accent2); margin-bottom: 0.75rem; }
+  .how-to-play ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 6px; }
+  .how-to-play li { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+  .how-to-play li strong { color: var(--text); }
+
+  .unit-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 2rem; }
+  .unit-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 6px; text-align: center; font-size: 0.72rem; color: var(--muted); transition: border-color 0.3s; }
+  .unit-chip .num { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+
+  .btn-primary {
+    display: block; width: 100%; max-width: 320px; margin: 0 auto;
+    background: var(--accent); color: #fff; border: none; border-radius: 12px;
+    padding: 1rem 2rem; font-size: 1.1rem; font-family: var(--display); font-weight: 700;
+    cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #9488f9; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,111,247,0.35); }
+
+  /* ── LEVEL PIPELINE ── */
+  .pipeline-header { margin-bottom: 1.5rem; }
+  .pipeline-header h2 { font-family: var(--display); font-size: 1.8rem; }
+  .pipeline-header p { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+  .pipeline { display: flex; flex-direction: column; gap: 8px; }
+  .pipe-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 0.9rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .pipe-row.unlocked { cursor: pointer; }
+  .pipe-row.unlocked:hover { border-color: var(--accent); background: var(--surface2); transform: translateX(4px); }
+  .pipe-row.locked { opacity: 0.38; cursor: not-allowed; }
+  .pipe-row.done { border-color: var(--accent3); }
+  .pipe-row.done::after { content: '✓'; position: absolute; right: 1.25rem; color: var(--accent3); font-size: 1.1rem; font-weight: 700; }
+  .pipe-row.current { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,111,247,0.2); }
+  .pipe-row.current::before { content: '▶'; position: absolute; right: 1.25rem; color: var(--accent); font-size: 0.9rem; }
+  .pipe-badge { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+  .pipe-info { flex: 1; }
+  .pipe-info .title { font-weight: 600; font-size: 0.92rem; }
+  .pipe-info .sub { color: var(--muted); font-size: 0.78rem; margin-top: 2px; }
+  .pipe-pts { font-family: var(--mono); font-size: 0.78rem; color: var(--accent2); background: rgba(247,201,72,0.1); border-radius: 6px; padding: 3px 8px; margin-right: 28px; }
+  .pipe-lock { font-size: 0.85rem; position: absolute; right: 1.25rem; color: var(--muted); }
+  .diff-bar { display: flex; gap: 3px; }
+  .diff-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .diff-dot.on { background: var(--accent2); }
+
+  /* ── QUESTION SCREEN ── */
+  .q-meta { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .q-unit-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.78rem; font-family: var(--mono); color: var(--accent); white-space: nowrap; }
+  .q-progress { flex: 1; height: 5px; background: var(--border); border-radius: 99px; }
+  .q-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #b8b0ff); border-radius: 99px; transition: width 0.5s ease; }
+  .q-pts-badge { background: rgba(247,201,72,0.12); border: 1px solid rgba(247,201,72,0.3); border-radius: 8px; padding: 4px 12px; font-size: 0.78rem; font-family: var(--mono); color: var(--accent2); }
+
+  .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 1.5rem; }
+  .q-card-header { padding: 1.25rem 1.75rem 1rem; border-bottom: 1px solid var(--border); }
+  .q-card-header .unit-tag { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
+  .q-card-header .q-text { font-size: 1.08rem; font-weight: 500; line-height: 1.65; color: var(--text); }
+
+  .q-math-area {
+    padding: 2rem 1.75rem; background: #0d0d17;
+    display: flex; align-items: center; justify-content: center; min-height: 110px;
+    border-bottom: 1px solid var(--border);
+  }
+  .q-math-area mjx-container { font-size: 1.55rem !important; color: var(--accent2) !important; }
+  .q-math-area svg { fill: var(--accent2) !important; }
+
+  /* ── CHOICES ── */
+  .choices { display: flex; flex-direction: column; gap: 10px; }
+  .choice-btn {
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 0.9rem 1.25rem; font-family: var(--font); font-size: 1rem; color: var(--text);
+    cursor: pointer; text-align: left; display: flex; align-items: flex-start; gap: 14px;
+    transition: all 0.18s; line-height: 1.6; width: 100%;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--surface2); }
+  .choice-btn .key { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); background: var(--surface2); border-radius: 4px; padding: 2px 8px; flex-shrink: 0; min-width: 26px; text-align: center; margin-top: 3px; }
+  .choice-btn.correct { border-color: var(--accent3) !important; background: rgba(79,209,160,0.08); }
+  .choice-btn.correct .key { background: var(--accent3); color: #0a0a0f; }
+  .choice-btn.wrong { border-color: var(--danger) !important; background: rgba(247,96,76,0.08); }
+  .choice-btn.wrong .key { background: var(--danger); color: #fff; }
+  .choice-btn:disabled { cursor: default; }
+
+  /* ── FEEDBACK ── */
+  .feedback-box { background: var(--surface2); border-radius: 12px; padding: 1.25rem 1.5rem; margin-top: 1rem; display: none; animation: fadeUp 0.3s ease; border-left: 3px solid var(--accent3); }
+  .feedback-box.show { display: block; }
+  .feedback-box.wrong-fb { border-left-color: var(--danger); }
+  .fb-title { font-weight: 700; margin-bottom: 6px; font-size: 0.95rem; }
+  .fb-section { margin-top: 10px; }
+  .fb-section-label { font-family: var(--mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+  .fb-body { color: var(--muted); font-size: 0.9rem; line-height: 1.65; }
+  .fb-solution {
+    background: #0d0d17; border: 1px solid rgba(247,201,72,0.18); border-radius: 10px;
+    padding: 1rem 1.25rem; margin-top: 6px;
+    display: flex; align-items: center; justify-content: center; min-height: 56px;
+  }
+  .fb-solution mjx-container { font-size: 1.05rem !important; }
+  .fb-solution svg { fill: var(--accent2) !important; }
+  .fb-wrong-reason { color: var(--danger); font-size: 0.88rem; line-height: 1.6; margin-top: 4px; }
+
+  .btn-next {
+    margin-top: 1.5rem; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 0.85rem 2rem; font-family: var(--display); font-size: 1rem;
+    font-weight: 700; cursor: pointer; display: none; transition: all 0.2s;
+  }
+  .btn-next.show { display: inline-block; animation: fadeUp 0.3s ease; }
+  .btn-next:hover { background: #9488f9; transform: translateY(-1px); }
+  .btn-next.danger { background: var(--danger); }
+  .btn-next.danger:hover { background: #ff7a6a; }
+
+  /* ── LEVEL COMPLETE ── */
+  .lc-screen { text-align: center; padding: 2rem 1rem; }
+  .lc-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  .lc-screen h2 { font-family: var(--display); font-size: 2rem; margin-bottom: 0.5rem; }
+  .lc-screen > p { color: var(--muted); margin-bottom: 1.5rem; }
+  .lc-pts { display: inline-block; font-family: var(--display); font-size: 2.5rem; color: var(--accent2); background: rgba(247,201,72,0.1); border-radius: 12px; padding: 0.5rem 2rem; margin-bottom: 1.5rem; }
+  .lc-facts { background: var(--surface2); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: left; }
+  .lc-facts h4 { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.5rem; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; }
+  .lc-facts p { font-size: 0.9rem; line-height: 1.6; }
+  .lc-next-preview { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; }
+  .lc-next-preview .lnp-label { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+  .lc-next-preview .lnp-title { font-weight: 600; font-size: 0.9rem; margin-top: 2px; }
+
+  /* ── GAME OVER ── */
+  .go-screen { text-align: center; padding: 2rem 1rem; }
+  .go-icon { font-size: 4rem; margin-bottom: 1rem; }
+  .go-screen h2 { font-family: var(--display); font-size: 2.2rem; margin-bottom: 0.5rem; color: var(--danger); }
+  .go-screen > p { color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
+  .go-failed-level {
+    background: var(--surface); border: 1px solid rgba(247,96,76,0.3); border-radius: 14px;
+    padding: 1.5rem; margin-bottom: 1.5rem; text-align: left;
+  }
+  .go-failed-level .gfl-label { font-family: var(--mono); font-size: 0.7rem; color: var(--danger); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; }
+  .go-failed-level .gfl-q { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.5rem; }
+  .go-failed-level .gfl-math { background: #0d0d17; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem; display: flex; justify-content: center; min-height: 50px; align-items: center; }
+  .go-failed-level .gfl-math mjx-container { font-size: 1rem !important; }
+  .go-failed-level .gfl-math svg { fill: var(--accent2) !important; }
+
+  .go-answer-breakdown { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .go-answer-row { background: var(--surface2); border-radius: 8px; padding: 0.75rem 1rem; display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; }
+  .go-answer-row .gar-badge { font-family: var(--mono); font-size: 0.7rem; border-radius: 4px; padding: 2px 7px; flex-shrink: 0; margin-top: 2px; }
+  .go-answer-row.your-pick .gar-badge { background: var(--danger); color: #fff; }
+  .go-answer-row.correct-pick .gar-badge { background: var(--accent3); color: #0a0a0f; }
+  .go-answer-row .gar-text { line-height: 1.5; }
+  .go-answer-row .gar-why { color: var(--muted); font-size: 0.83rem; margin-top: 3px; }
+
+  .go-solution-box { background: #0d0d17; border: 1px solid rgba(247,201,72,0.18); border-radius: 10px; padding: 1rem 1.25rem; margin-top: 0.75rem; display: flex; justify-content: center; min-height: 52px; align-items: center; }
+  .go-solution-box mjx-container { font-size: 1rem !important; }
+  .go-solution-box svg { fill: var(--accent2) !important; }
+
+  .progress-lost {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(247,96,76,0.08); border: 1px solid rgba(247,96,76,0.2);
+    border-radius: 10px; padding: 0.75rem 1.25rem; margin-bottom: 1.5rem;
+    font-size: 0.88rem; color: var(--danger); font-family: var(--mono);
+  }
+
+  .btn-danger {
+    display: block; width: 100%; max-width: 320px; margin: 0 auto;
+    background: var(--danger); color: #fff; border: none; border-radius: 12px;
+    padding: 1rem 2rem; font-size: 1.1rem; font-family: var(--display); font-weight: 700;
+    cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s;
+  }
+  .btn-danger:hover { background: #ff7a6a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(247,96,76,0.35); }
+
+  /* ── PRIZE ── */
+  .prize-screen { text-align: center; padding: 2.5rem 1rem; }
+  .prize-trophy { font-size: 5rem; margin-bottom: 1.5rem; animation: bounce 1s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-12px) scale(1.05); } }
+  .prize-screen h1 { font-family: var(--display); font-size: 2.8rem; margin-bottom: 0.75rem; }
+  .prize-screen h1 span { color: var(--accent2); }
+  .prize-screen > p { color: var(--muted); max-width: 460px; margin: 0 auto 2rem; line-height: 1.7; }
+  .score-display { display: inline-flex; flex-direction: column; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem 3rem; margin-bottom: 1.5rem; }
+  .score-display .s-label { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .score-display .s-val { font-family: var(--display); font-size: 3rem; color: var(--accent2); }
+  .stars { font-size: 2rem; margin-bottom: 1.5rem; letter-spacing: 8px; }
+  .certificate { background: var(--surface); border: 1px solid var(--accent); border-radius: 16px; padding: 2rem; max-width: 500px; margin: 0 auto 2rem; position: relative; }
+  .certificate::before { content: ''; position: absolute; inset: 6px; border: 1px dashed rgba(124,111,247,0.3); border-radius: 10px; pointer-events: none; }
+  .certificate h3 { font-family: var(--display); font-size: 1.1rem; color: var(--accent); margin-bottom: 0.5rem; }
+  .certificate p { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+  .certificate .cert-name { font-family: var(--display); font-size: 1.6rem; color: var(--accent2); margin: 0.75rem 0; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 0.85rem 2.5rem; font-family: var(--display); font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-ghost:hover { background: var(--accent); color: #fff; }
+
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  mjx-container[jax="CHTML"] { color: var(--text); }
+  .confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; opacity: 0; animation: confettifall linear forwards; border-radius: 2px; pointer-events: none; z-index: 999; }
+  @keyframes confettifall { 0% { opacity: 1; transform: translateY(0) rotate(0deg); } 100% { opacity: 0; transform: translateY(100vh) rotate(720deg); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="logo">AP CALC BC — THE GAUNTLET</div>
+    <div class="stats">
+      <div class="stat-pill"><span class="label">SCORE</span><span class="val" id="score-display">0</span></div>
+      <div class="stat-pill"><span class="label">LEVEL</span><span class="val" id="level-display">—</span></div>
+      <div class="stat-pill"><span class="label">LIVES</span><span class="val" id="lives-display">❤️</span></div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="home-hero">
+      <div class="eyebrow">AP Calculus BC · All 10 Units</div>
+      <h1>The <span>Gauntlet</span><br>Awaits.</h1>
+      <p>10 sequential levels. One shot each. Get one wrong — you restart from Level 1. Master every unit to claim your prize.</p>
+    </div>
+    <div class="how-to-play">
+      <h3>📋 How to Play</h3>
+      <ol>
+        <li><strong>Levels are sequential</strong> — you must beat Level 1 before Level 2 unlocks, and so on through all 10 units.</li>
+        <li><strong>One life per run</strong> — answer a question incorrectly and the game is over. You restart from Level 1.</li>
+        <li><strong>Each level is worth more points</strong> — early levels are worth 10 pts, later levels up to 100 pts.</li>
+        <li><strong>Learn from your mistakes</strong> — when you get one wrong, you'll see exactly why each answer choice was right or wrong.</li>
+        <li><strong>Beat all 10 levels in one run</strong> to unlock the prize screen and certificate. Good luck!</li>
+      </ol>
+    </div>
+    <div class="unit-grid" id="unit-grid"></div>
+    <button class="btn-primary" onclick="startGame()">Start the Gauntlet →</button>
+  </div>
+
+  <!-- LEVEL PIPELINE -->
+  <div id="screen-levels" class="screen">
+    <div class="pipeline-header">
+      <h2>Level Select</h2>
+      <p>Complete each level in order. One wrong answer ends your run.</p>
+    </div>
+    <div class="pipeline" id="pipeline"></div>
+  </div>
+
+  <!-- QUESTION -->
+  <div id="screen-question" class="screen">
+    <div class="q-meta">
+      <div class="q-unit-badge" id="q-unit-badge">Unit 1</div>
+      <div class="q-progress"><div class="q-progress-fill" id="q-progress-fill" style="width:0%"></div></div>
+      <div class="q-pts-badge" id="q-pts-badge">+10 pts</div>
+    </div>
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="unit-tag" id="q-unit-label"></div>
+        <div class="q-text" id="q-text"></div>
+      </div>
+      <div class="q-math-area" id="q-math-area"></div>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback-box" id="feedback"></div>
+    <button class="btn-next" id="btn-next" onclick="handleNext()"></button>
+  </div>
+
+  <!-- LEVEL COMPLETE -->
+  <div id="screen-levelcomplete" class="screen">
+    <div class="lc-screen">
+      <div class="lc-icon" id="lc-icon">🎯</div>
+      <h2 id="lc-title">Level Complete!</h2>
+      <p id="lc-sub"></p>
+      <div class="lc-pts" id="lc-pts">+10</div>
+      <div class="lc-facts"><h4>Key Takeaway</h4><p id="lc-fact"></p></div>
+      <div class="lc-next-preview" id="lc-next-preview" style="display:none">
+        <span style="font-size:1.5rem" id="lnp-emoji"></span>
+        <div><div class="lnp-label">Up next</div><div class="lnp-title" id="lnp-title"></div></div>
+      </div>
+      <button class="btn-primary" id="lc-btn" style="max-width:280px" onclick="handleLevelCompleteNext()"></button>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="screen-gameover" class="screen">
+    <div class="go-screen">
+      <div class="go-icon">💀</div>
+      <h2>Game Over</h2>
+      <p id="go-intro"></p>
+      <div class="go-failed-level" id="go-failed-level">
+        <div class="gfl-label" id="gfl-label"></div>
+        <div class="gfl-q" id="gfl-q"></div>
+        <div class="gfl-math" id="gfl-math"></div>
+        <div class="go-answer-breakdown" id="go-answer-breakdown"></div>
+        <div style="margin-top:0.75rem">
+          <div class="fb-section-label" style="font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Full Solution</div>
+          <div class="go-solution-box" id="go-solution-box"></div>
+        </div>
+      </div>
+      <div class="progress-lost" id="progress-lost"></div>
+      <button class="btn-danger" onclick="restartGame()">Try Again from Level 1 🔄</button>
+    </div>
+  </div>
+
+  <!-- PRIZE -->
+  <div id="screen-prize" class="screen">
+    <div class="prize-screen">
+      <div class="prize-trophy">🏆</div>
+      <h1>You <span>Crushed</span> It.</h1>
+      <p>You completed all 10 levels of the AP Calculus BC Gauntlet without a single mistake. That's a perfect run.</p>
+      <div class="score-display">
+        <span class="s-label">Final Score</span>
+        <span class="s-val" id="final-score">0</span>
+      </div>
+      <div class="stars" id="prize-stars">⭐⭐⭐</div>
+      <div class="certificate">
+        <h3>🎓 Certificate of Completion</h3>
+        <div class="cert-name">AP Calculus BC</div>
+        <p>This player has successfully demonstrated mastery of all 10 units of AP Calculus BC, from limits and derivatives through parametric equations and infinite series — in a single flawless run.</p>
+      </div>
+      <button class="btn-ghost" onclick="restartGame()">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const LEVELS = [
+  {
+    unit: 1, title: "Limits & Continuity", emoji: "🔭", color: "#7c6ff7",
+    difficulty: 1, points: 10, tag: "Unit 1 — Easiest",
+    fact: "Limits describe how a function behaves as x approaches a value — the foundation everything else in calculus is built on.",
+    question: "What is the value of the limit?",
+    math: `\\lim_{x \\to 3} \\frac{x^2 - 9}{x - 3}`,
+    choices: [
+      { tex: `6`, correct: true,
+        wrongReason: null },
+      { tex: `0`, correct: false,
+        wrongReason: "Plugging in x = 3 directly gives 0/0 — an indeterminate form, not 0. You must factor and cancel first." },
+      { tex: `\\text{Undefined}`, correct: false,
+        wrongReason: "The function has a removable discontinuity at x = 3, but the limit still exists — it equals 6 after factoring." },
+      { tex: `3`, correct: false,
+        wrongReason: "x = 3 is the value you're approaching, not the value of the limit. After canceling (x−3), the expression becomes x+3 = 6." }
+    ],
+    explanation: "Factor the numerator as (x−3)(x+3), cancel (x−3), then substitute x = 3.",
+    solutionTex: `\\frac{x^2-9}{x-3} = \\frac{(x-3)(x+3)}{x-3} = x+3 \\;\\Rightarrow\\; 3+3 = 6`
+  },
+  {
+    unit: 2, title: "Differentiation — Definition & Rules", emoji: "📐", color: "#4fd1a0",
+    difficulty: 2, points: 20, tag: "Unit 2 — Easy",
+    fact: "The power rule is the fastest tool in calculus: bring down the exponent, reduce it by 1. Constants always vanish.",
+    question: "Find the derivative f ′(x).",
+    math: `f(x) = 3x^4 - 5x^2 + 7`,
+    choices: [
+      { tex: `12x^3 - 10x`, correct: true, wrongReason: null },
+      { tex: `12x^3 - 5x`, correct: false,
+        wrongReason: "The derivative of −5x² is −10x, not −5x. The power rule: d/dx[axⁿ] = n·axⁿ⁻¹, so 2·(−5)x¹ = −10x." },
+      { tex: `12x^4 - 10x + 7`, correct: false,
+        wrongReason: "You forgot to apply the power rule to the 3x⁴ term and kept the constant 7 — derivatives of constants are always 0." },
+      { tex: `3x^3 - 10x`, correct: false,
+        wrongReason: "The coefficient on the first term is wrong. d/dx[3x⁴] = 4·3x³ = 12x³, not 3x³." }
+    ],
+    explanation: "Apply the power rule to each term. The constant 7 has a derivative of 0.",
+    solutionTex: `f'(x) = 4\\cdot3x^3 - 2\\cdot5x + 0 = 12x^3 - 10x`
+  },
+  {
+    unit: 3, title: "Differentiation — Composite, Implicit & Inverse", emoji: "🔗", color: "#f7c948",
+    difficulty: 3, points: 30, tag: "Unit 3 — Easy-Medium",
+    fact: "Implicit differentiation treats y as a function of x — every time you differentiate a y term, you must multiply by dy/dx.",
+    question: "Use implicit differentiation to find dy/dx.",
+    math: `x^2 + y^2 = 25`,
+    choices: [
+      { tex: `-\\dfrac{x}{y}`, correct: true, wrongReason: null },
+      { tex: `\\dfrac{x}{y}`, correct: false,
+        wrongReason: "You dropped the negative sign. After solving 2x + 2y(dy/dx) = 0, isolating dy/dx gives −x/y, not +x/y." },
+      { tex: `-\\dfrac{y}{x}`, correct: false,
+        wrongReason: "You flipped the fraction. Solving for dy/dx: 2y(dy/dx) = −2x  →  dy/dx = −x/y, not −y/x." },
+      { tex: `2x + 2y`, correct: false,
+        wrongReason: "This is what you get before setting the derivative equal to zero — you need to solve for dy/dx, not just differentiate." }
+    ],
+    explanation: "Differentiate both sides with respect to x. d/dx[y²] = 2y·(dy/dx) by the chain rule. Then solve for dy/dx.",
+    solutionTex: `2x + 2y\\frac{dy}{dx} = 0 \\;\\Rightarrow\\; \\frac{dy}{dx} = -\\frac{x}{y}`
+  },
+  {
+    unit: 4, title: "Contextual Applications of Differentiation", emoji: "📈", color: "#f7604c",
+    difficulty: 4, points: 40, tag: "Unit 4 — Medium",
+    fact: "L'Hôpital's Rule only applies to indeterminate forms like 0/0 or ∞/∞. Always check the form before applying it.",
+    question: "Evaluate the limit using L'Hôpital's Rule.",
+    math: `\\lim_{x \\to 0} \\frac{\\sin x}{x}`,
+    choices: [
+      { tex: `1`, correct: true, wrongReason: null },
+      { tex: `0`, correct: false,
+        wrongReason: "sin(0)/0 = 0/0 is indeterminate, not 0. After applying L'Hôpital — differentiating top and bottom — you get cos(0)/1 = 1." },
+      { tex: `\\infty`, correct: false,
+        wrongReason: "The limit does not blow up. As x→0, sin(x) and x shrink at the same rate, giving a finite limit of 1." },
+      { tex: `-1`, correct: false,
+        wrongReason: "−1 is the value of cos(π), not cos(0). After L'Hôpital: lim cos(x)/1 as x→0 = cos(0) = 1." }
+    ],
+    explanation: "This is 0/0 indeterminate. Apply L'Hôpital: differentiate numerator and denominator separately, then evaluate.",
+    solutionTex: `\\frac{d}{dx}[\\sin x]=\\cos x,\\;\\frac{d}{dx}[x]=1 \\;\\Rightarrow\\; \\lim_{x\\to0}\\frac{\\cos x}{1}=\\cos(0)=1`
+  },
+  {
+    unit: 5, title: "Analytical Applications of Differentiation", emoji: "🔍", color: "#a78bfa",
+    difficulty: 5, points: 50, tag: "Unit 5 — Medium",
+    fact: "The MVT is often misquoted. It only needs two things: continuity on [a,b] and differentiability on (a,b). Nothing about increasing, decreasing, or concavity.",
+    question: "Which condition is NOT required for the Mean Value Theorem to apply on [a, b]?",
+    math: `\\frac{f(b)-f(a)}{b-a} = f'(c) \\text{ for some } c \\in (a,b)`,
+    choices: [
+      { tex: `f \\text{ is differentiable on } (a,b)`, correct: false,
+        wrongReason: "Differentiability on the open interval (a,b) IS required by the MVT. This is one of the two official conditions." },
+      { tex: `f \\text{ is continuous on } [a,b]`, correct: false,
+        wrongReason: "Continuity on the closed interval [a,b] IS required. Without it, the theorem can fail — e.g. a jump discontinuity." },
+      { tex: `f \\text{ is strictly increasing on } [a,b]`, correct: true, wrongReason: null },
+      { tex: `a \\neq b`, correct: false,
+        wrongReason: "If a = b the average rate of change is undefined (division by zero), so a ≠ b is implicitly required." }
+    ],
+    explanation: "The MVT only requires f to be continuous on [a,b] and differentiable on (a,b). No increasing/decreasing requirement.",
+    solutionTex: `\\text{MVT: continuous on } [a,b] \\;\\textbf{AND}\\; \\text{differentiable on } (a,b)`
+  },
+  {
+    unit: 6, title: "Integration & Accumulation", emoji: "∫", color: "#38bdf8",
+    difficulty: 6, points: 60, tag: "Unit 6 — Medium-Hard",
+    fact: "The Fundamental Theorem of Calculus is the bridge between differentiation and integration. Evaluate the antiderivative at the bounds, subtract bottom from top.",
+    question: "Evaluate the definite integral.",
+    math: `\\int_0^3 (2x + 1)\\, dx`,
+    choices: [
+      { tex: `12`, correct: true, wrongReason: null },
+      { tex: `9`, correct: false,
+        wrongReason: "You may have only integrated 2x and forgot the +1. The antiderivative is x²+x, not x². Evaluate: (9+3)−(0+0) = 12." },
+      { tex: `6`, correct: false,
+        wrongReason: "This looks like you only evaluated x² at x=3 without adding the x term. Full antiderivative is x²+x, giving 12." },
+      { tex: `15`, correct: false,
+        wrongReason: "Check the upper bound. [x²+x] from 0 to 3 = (9+3) − (0+0) = 12, not 15." }
+    ],
+    explanation: "Find the antiderivative of each term, then apply the Fundamental Theorem — evaluate at 3 and subtract the value at 0.",
+    solutionTex: `\\left[x^2 + x\\right]_0^3 = (9+3)-(0+0) = 12`
+  },
+  {
+    unit: 7, title: "Differential Equations", emoji: "🌀", color: "#fb923c",
+    difficulty: 7, points: 70, tag: "Unit 7 — Hard",
+    fact: "For separable DEs, separate all y terms to one side and all x terms to the other, integrate both sides, then apply the initial condition.",
+    question: "Solve the separable differential equation with initial condition y(0) = 2.",
+    math: `\\frac{dy}{dx} = 3y`,
+    choices: [
+      { tex: `y = 2e^{3x}`, correct: true, wrongReason: null },
+      { tex: `y = e^{3x} + 2`, correct: false,
+        wrongReason: "The initial condition y(0)=2 means C·e⁰ = 2, so C=2 multiplies the exponential — it doesn't add to it." },
+      { tex: `y = 3e^{2x}`, correct: false,
+        wrongReason: "You swapped the 3 and the 2. The DE is dy/y = 3dx, so after integrating: y = Ce^(3x). At x=0: C=2. Answer is 2e^(3x)." },
+      { tex: `y = 2e^{x} + 3`, correct: false,
+        wrongReason: "The coefficient of x in the exponent should be 3 (from the DE), and the 3 shouldn't be added — it's the initial value of C=2 that matters." }
+    ],
+    explanation: "Separate: dy/y = 3dx. Integrate both sides to get ln|y| = 3x + C. Exponentiate, then use y(0)=2 to solve for C.",
+    solutionTex: `\\ln|y|=3x+C \\;\\Rightarrow\\; y=Ce^{3x} \\;\\xrightarrow{y(0)=2}\\; C=2 \\;\\Rightarrow\\; y=2e^{3x}`
+  },
+  {
+    unit: 8, title: "Applications of Integration", emoji: "🏗️", color: "#34d399",
+    difficulty: 8, points: 80, tag: "Unit 8 — Hard",
+    fact: "Area between curves = ∫(top − bottom)dx. Always confirm which function is on top across the interval before integrating.",
+    question: "Find the area of the region between the two curves on [0, 1].",
+    math: `f(x) = x, \\quad g(x) = x^2, \\quad x \\in [0,\\,1]`,
+    choices: [
+      { tex: `\\dfrac{1}{6}`, correct: true, wrongReason: null },
+      { tex: `\\dfrac{1}{3}`, correct: false,
+        wrongReason: "You may have integrated only x² or only x. You need ∫(x − x²)dx from 0 to 1 = [x²/2 − x³/3] = 1/2 − 1/3 = 1/6." },
+      { tex: `\\dfrac{1}{2}`, correct: false,
+        wrongReason: "1/2 is the integral of x alone. You must subtract the integral of x² (the bottom curve) to find the area between them." },
+      { tex: `\\dfrac{1}{4}`, correct: false,
+        wrongReason: "Double-check your antiderivatives. ∫x dx = x²/2, ∫x² dx = x³/3. Evaluated at 1 and 0: 1/2 − 1/3 = 3/6 − 2/6 = 1/6." }
+    ],
+    explanation: "On [0,1], x ≥ x². Integrate the top minus bottom: ∫(x − x²)dx from 0 to 1.",
+    solutionTex: `\\int_0^1(x-x^2)\\,dx=\\left[\\frac{x^2}{2}-\\frac{x^3}{3}\\right]_0^1=\\frac{1}{2}-\\frac{1}{3}=\\frac{1}{6}`
+  },
+  {
+    unit: 9, title: "Parametric Equations, Polar & Vector", emoji: "🎯", color: "#e879f9",
+    difficulty: 9, points: 90, tag: "Unit 9 — Very Hard",
+    fact: "For parametric curves, never differentiate y directly with respect to x. Always use (dy/dt) ÷ (dx/dt) and simplify.",
+    question: "Given the parametric equations, find dy/dx.",
+    math: `x(t) = t^2, \\qquad y(t) = t^3`,
+    choices: [
+      { tex: `\\dfrac{3t}{2}`, correct: true, wrongReason: null },
+      { tex: `\\dfrac{3t^2}{2t}\\;\\text{(unsimplified)}`, correct: false,
+        wrongReason: "The setup is correct — dy/dt = 3t² and dx/dt = 2t — but you must simplify: 3t²/2t = 3t/2. Unsimplified is not a final answer." },
+      { tex: `\\dfrac{2t}{3t^2}`, correct: false,
+        wrongReason: "You flipped the formula. dy/dx = (dy/dt) ÷ (dx/dt) = 3t²/2t, not dx/dt ÷ dy/dt." },
+      { tex: `\\dfrac{t}{2}`, correct: false,
+        wrongReason: "Looks like you differentiated y = t³ as if it were t² (giving 2t), then divided. The derivative of t³ is 3t², giving 3t/2." }
+    ],
+    explanation: "Use dy/dx = (dy/dt) ÷ (dx/dt). Differentiate each parametric equation with respect to t, divide, and simplify.",
+    solutionTex: `\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}=\\frac{3t^2}{2t}=\\frac{3t}{2}`
+  },
+  {
+    unit: 10, title: "Infinite Sequences & Series", emoji: "♾️", color: "#f43f5e",
+    difficulty: 10, points: 100, tag: "Unit 10 — Hardest",
+    fact: "The Maclaurin series is a Taylor series centered at 0. For eˣ, every term is xⁿ/n!. At x=1, each term becomes 1/n! — giving you the decimal expansion of e.",
+    question: "Which expression correctly represents the Maclaurin series for eˣ evaluated at x = 1?",
+    math: `e^x = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}`,
+    choices: [
+      { tex: `1 + 1 + \\dfrac{1}{2!} + \\dfrac{1}{3!} + \\dfrac{1}{4!} + \\cdots`, correct: true, wrongReason: null },
+      { tex: `1 + x + \\dfrac{x^2}{2} + \\dfrac{x^3}{6} + \\cdots\\;\\text{(x not substituted)}`, correct: false,
+        wrongReason: "This is the general Maclaurin series for eˣ, not evaluated at x=1. You need to substitute x=1 into every term, making each xⁿ/n! into 1/n!." },
+      { tex: `\\sum x^n\\;\\text{(geometric series, not } e^x\\text{)}`, correct: false,
+        wrongReason: "Σxⁿ is a geometric series converging to 1/(1−x), not eˣ. The eˣ series requires n! in the denominator of each term." },
+      { tex: `1 - \\dfrac{1}{2!} + \\dfrac{1}{4!} - \\cdots\\;\\text{(this is cos x)}`, correct: false,
+        wrongReason: "This alternating series with only even terms is the Maclaurin series for cos(x), not eˣ. The eˣ series has all positive terms." }
+    ],
+    explanation: "Substitute x = 1 into Σxⁿ/n!. Each term becomes 1/n!, giving 1/0! + 1/1! + 1/2! + 1/3! + … = 1 + 1 + 1/2 + 1/6 + …",
+    solutionTex: `e^1=\\frac{1}{0!}+\\frac{1}{1!}+\\frac{1}{2!}+\\frac{1}{3!}+\\cdots = 1+1+\\frac{1}{2}+\\frac{1}{6}+\\cdots`
+  }
+];
+
+// ── STATE ──
+let currentLevelIdx = 0;   // which level we're on (0-based)
+let totalScore = 0;
+let currentLevel = null;
+let answered = false;
+let selectedChoiceIdx = -1;
+
+// ── HELPERS ──
+function typeset(el) {
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(console.error);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const scr = document.getElementById('screen-' + id);
+  scr.classList.add('active');
+  typeset(scr);
+}
+function updateTopBar() {
+  document.getElementById('score-display').textContent = totalScore;
+  document.getElementById('level-display').textContent = currentLevelIdx + '/10';
+  document.getElementById('lives-display').textContent = '❤️';
+}
+function buildUnitGrid() {
+  const grid = document.getElementById('unit-grid');
+  grid.innerHTML = LEVELS.map((l, i) => {
+    const done = i < currentLevelIdx;
+    return `<div class="unit-chip" style="${done ? 'border-color:'+l.color : ''}">
+      <span class="num">${l.emoji}</span>Unit ${l.unit}
+    </div>`;
+  }).join('');
+}
+
+// ── HOME → START ──
+function startGame() {
+  showLevelPipeline();
+}
+
+// ── LEVEL PIPELINE ──
+function showLevelPipeline() {
+  buildUnitGrid();
+  const pipe = document.getElementById('pipeline');
+  pipe.innerHTML = LEVELS.map((l, i) => {
+    const done = i < currentLevelIdx;
+    const current = i === currentLevelIdx;
+    const locked = i > currentLevelIdx;
+    const dots = Array.from({length:5}, (_,d) => `<div class="diff-dot${d < Math.ceil(l.difficulty/2) ? ' on' : ''}"></div>`).join('');
+    let cls = 'pipe-row';
+    if (done) cls += ' done';
+    else if (current) cls += ' current unlocked';
+    else if (locked) cls += ' locked';
+    const clickable = !locked;
+    return `<div class="${cls}" ${clickable && !done ? `onclick="startLevel(${i})"` : ''}>
+      <div class="pipe-badge" style="background:${l.color}22">${l.emoji}</div>
+      <div class="pipe-info">
+        <div class="title">${l.title}</div>
+        <div class="sub">${l.tag}</div>
+      </div>
+      <div class="diff-bar">${dots}</div>
+      <div class="pipe-pts">+${l.points} pts</div>
+      ${locked ? '<span class="pipe-lock">🔒</span>' : ''}
+    </div>`;
+  }).join('');
+  showScreen('levels');
+}
+
+// ── START A LEVEL ──
+function startLevel(idx) {
+  if (idx !== currentLevelIdx) return; // only allow current level
+  const level = LEVELS[idx];
+  currentLevel = level;
+  answered = false;
+  selectedChoiceIdx = -1;
+
+  document.getElementById('q-unit-badge').textContent = `Level ${idx+1} / 10 — ${level.title}`;
+  document.getElementById('q-unit-label').textContent = level.tag.toUpperCase();
+  document.getElementById('q-text').textContent = level.question;
+  document.getElementById('q-pts-badge').textContent = `+${level.points} pts`;
+  document.getElementById('q-progress-fill').style.width = (idx / 10 * 100) + '%';
+
+  const mathArea = document.getElementById('q-math-area');
+  mathArea.innerHTML = `\\[${level.math}\\]`;
+
+  document.getElementById('feedback').className = 'feedback-box';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('btn-next').className = 'btn-next';
+
+  const keys = ['A', 'B', 'C', 'D'];
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = level.choices.map((c, i) => `
+    <button class="choice-btn" id="choice-${i}" onclick="selectAnswer(${i})">
+      <span class="key">${keys[i]}</span>
+      <span class="choice-math">\\(${c.tex}\\)</span>
+    </button>`).join('');
+
+  showScreen('question');
+}
+
+// ── ANSWER SELECTION ──
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  selectedChoiceIdx = idx;
+  const level = currentLevel;
+  const choice = level.choices[idx];
+  const allBtns = document.querySelectorAll('.choice-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  // Always highlight the correct answer
+  level.choices.forEach((c, i) => {
+    if (c.correct) document.getElementById('choice-'+i).classList.add('correct');
+  });
+
+  const feedback = document.getElementById('feedback');
+  const btnNext = document.getElementById('btn-next');
+
+  if (choice.correct) {
+    document.getElementById('choice-'+idx).classList.add('correct');
+    totalScore += level.points;
+    currentLevelIdx++;
+    updateTopBar();
+    feedback.className = 'feedback-box show';
+    feedback.innerHTML = `
+      <div class="fb-title" style="color:var(--accent3)">✓ Correct! +${level.points} points</div>
+      <div class="fb-section">
+        <div class="fb-section-label">Why it's right</div>
+        <div class="fb-body">${level.explanation}</div>
+      </div>
+      <div class="fb-section">
+        <div class="fb-section-label">Full Solution</div>
+        <div class="fb-solution">\\[${level.solutionTex}\\]</div>
+      </div>`;
+    btnNext.textContent = currentLevelIdx === 10 ? 'Claim Your Prize 🏆' : 'Next Level →';
+    btnNext.className = 'btn-next show';
+  } else {
+    document.getElementById('choice-'+idx).classList.add('wrong');
+    feedback.className = 'feedback-box show wrong-fb';
+    feedback.innerHTML = `
+      <div class="fb-title" style="color:var(--danger)">✗ Incorrect — read the explanation before restarting</div>
+      <div class="fb-section" style="margin-top:10px">
+        <div class="fb-section-label">Why your answer was wrong</div>
+        <div class="fb-wrong-reason">${choice.wrongReason}</div>
+      </div>
+      <div class="fb-section" style="margin-top:10px">
+        <div class="fb-section-label">Correct approach</div>
+        <div class="fb-body">${level.explanation}</div>
+        <div class="fb-solution" style="margin-top:8px">\\[${level.solutionTex}\\]</div>
+      </div>`;
+    btnNext.textContent = '💀 See Full Breakdown →';
+    btnNext.className = 'btn-next show danger';
+  }
+
+  typeset(feedback);
+}
+
+// ── NEXT BUTTON ──
+function handleNext() {
+  const level = currentLevel;
+  const wasCorrect = level.choices[selectedChoiceIdx] && level.choices[selectedChoiceIdx].correct;
+
+  if (wasCorrect) {
+    if (currentLevelIdx === 10) { showPrize(); return; }
+    showLevelComplete(LEVELS[currentLevelIdx - 1]);
+  } else {
+    showGameOver(level, selectedChoiceIdx);
+  }
+}
+
+// ── LEVEL COMPLETE ──
+function showLevelComplete(completedLevel) {
+  document.getElementById('lc-icon').textContent = completedLevel.emoji;
+  document.getElementById('lc-title').textContent = `Level ${completedLevel.unit} Complete!`;
+  document.getElementById('lc-sub').textContent = `${completedLevel.title} — mastered.`;
+  document.getElementById('lc-pts').textContent = `+${completedLevel.points} pts earned`;
+  document.getElementById('lc-fact').textContent = completedLevel.fact;
+
+  const nextPreview = document.getElementById('lc-next-preview');
+  const lcBtn = document.getElementById('lc-btn');
+  if (currentLevelIdx < 10) {
+    const next = LEVELS[currentLevelIdx];
+    nextPreview.style.display = 'flex';
+    document.getElementById('lnp-emoji').textContent = next.emoji;
+    document.getElementById('lnp-title').textContent = `Level ${next.unit}: ${next.title}`;
+    lcBtn.textContent = `Continue to Level ${next.unit} →`;
+  } else {
+    nextPreview.style.display = 'none';
+    lcBtn.textContent = 'Claim Your Prize 🏆';
+  }
+  showScreen('levelcomplete');
+}
+
+function handleLevelCompleteNext() {
+  if (currentLevelIdx >= 10) { showPrize(); return; }
+  startLevel(currentLevelIdx);
+}
+
+// ── GAME OVER ──
+function showGameOver(level, chosenIdx) {
+  const lostScore = totalScore;
+  document.getElementById('go-intro').textContent =
+    `You fell on Level ${level.unit}: ${level.title}. You earned ${lostScore} points this run. Study the breakdown below, then try again.`;
+
+  document.getElementById('gfl-label').textContent = `Level ${level.unit} — ${level.title}`;
+  document.getElementById('gfl-q').textContent = level.question;
+
+  const mathEl = document.getElementById('gfl-math');
+  mathEl.innerHTML = `\\[${level.math}\\]`;
+
+  // Build per-answer breakdown
+  const keys = ['A','B','C','D'];
+  const breakdown = document.getElementById('go-answer-breakdown');
+  breakdown.innerHTML = level.choices.map((c, i) => {
+    const isChosen = i === chosenIdx;
+    const isCorrect = c.correct;
+    let rowClass = 'go-answer-row';
+    let badge = keys[i];
+    let badgeStyle = 'background:var(--surface);color:var(--muted);border:1px solid var(--border)';
+    let whyHtml = '';
+    if (isCorrect) {
+      rowClass += ' correct-pick';
+      badgeStyle = '';
+      whyHtml = `<div class="gar-why" style="color:var(--accent3)">✓ This is the correct answer — ${level.explanation}</div>`;
+    } else if (isChosen) {
+      rowClass += ' your-pick';
+      badgeStyle = '';
+      whyHtml = `<div class="gar-why" style="color:var(--danger)">✗ Your pick — ${c.wrongReason}</div>`;
+    } else {
+      whyHtml = `<div class="gar-why">${c.wrongReason || 'This answer is incorrect.'}</div>`;
+    }
+    return `<div class="${rowClass}">
+      <span class="gar-badge" style="${badgeStyle}">${badge}</span>
+      <div class="gar-text">
+        <span>\\(${c.tex}\\)</span>
+        ${whyHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  const solBox = document.getElementById('go-solution-box');
+  solBox.innerHTML = `\\[${level.solutionTex}\\]`;
+
+  document.getElementById('progress-lost').innerHTML =
+    `⚠️ Progress reset — ${currentLevelIdx > 0 ? `${currentLevelIdx} level${currentLevelIdx>1?'s':''} completed, ${lostScore} pts lost` : 'No progress lost'}`;
+
+  showScreen('gameover');
+}
+
+// ── PRIZE ──
+function showPrize() {
+  fireConfetti();
+  document.getElementById('final-score').textContent = totalScore;
+  document.getElementById('prize-stars').textContent = '⭐⭐⭐';
+  showScreen('prize');
+}
+
+// ── RESTART ──
+function restartGame() {
+  currentLevelIdx = 0;
+  totalScore = 0;
+  currentLevel = null;
+  answered = false;
+  selectedChoiceIdx = -1;
+  updateTopBar();
+  buildUnitGrid();
+  showLevelPipeline();
+}
+
+// ── CONFETTI ──
+function fireConfetti() {
+  const colors = ['#7c6ff7','#f7c948','#4fd1a0','#f7604c','#e879f9','#38bdf8'];
+  for (let i = 0; i < 90; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*1}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};`;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+buildUnitGrid();
+updateTopBar();
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Done"
